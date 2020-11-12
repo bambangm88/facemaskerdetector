@@ -161,17 +161,20 @@ public class MultiBoxTracker {
 
       String name = "" ;
       String mask = "";
+      String temp = "";
 
       try {
 
         String string = labelString;
         String[] parts = string.split("#");
         name = parts[0]; // 004
-        mask = parts[1]; // 034556
+        mask = parts[2]; // 034556
+        temp = parts[1]; // 034556
 
       }catch (Exception e){
         name = "" ;
         mask = "";
+        temp = "";
       }
 
 
@@ -179,7 +182,9 @@ public class MultiBoxTracker {
       borderedText.drawText(
           canvas, trackedPos.left + cornerSize, trackedPos.top, name, boxPaint);
       borderedText.drawText(
-              canvas, trackedPos.left + cornerSize, trackedPos.top+60, mask, boxPaint);
+              canvas, trackedPos.left + cornerSize, trackedPos.top+50, mask, boxPaint);
+      borderedText.drawText(
+              canvas, trackedPos.left + cornerSize, trackedPos.top+100, temp, boxPaint);
     }
   }
 

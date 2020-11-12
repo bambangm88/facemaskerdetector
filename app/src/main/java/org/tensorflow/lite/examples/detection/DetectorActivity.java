@@ -36,6 +36,10 @@ import android.util.Size;
 import android.util.TypedValue;
 import android.widget.Toast;
 
+import com.common.thermalimage.HotImageCallback;
+import com.common.thermalimage.TemperatureBitmapData;
+import com.common.thermalimage.TemperatureData;
+import com.common.thermalimage.ThermalImageUtil;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
@@ -96,6 +100,8 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
   private static final boolean MAINTAIN_ASPECT = false;
 
+  public static String temperatureValue = "";
+
   private String TAG = "TAG";
 
   public static String INFRAN_NAME = "";
@@ -109,6 +115,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private Context mContext ;
   public List<JsonInfran> EntityInfran = new ArrayList<>();
 
+  ThermalImageUtil temperatureUtil;
   private static final boolean SAVE_PREVIEW_BITMAP = false;
   private static final float TEXT_SIZE_DIP = 10;
   OverlayView trackingOverlay;
@@ -147,7 +154,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     API = Server.getAPIServiceInfran();
     mContext = this ;
-
+    temperatureUtil = new ThermalImageUtil(DetectorActivity.this);
 
     // Real-time contour detection of multiple faces
     FaceDetectorOptions options =
@@ -293,14 +300,20 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
               public void onSuccess(List<Face> faces) {
                 if (faces.size() == 0) {
                   updateResults(currTimestamp, new LinkedList<>());
+
                   return;
                 }
+
+
+
                 Log.e(TAG, "onSuccess: faces size"+faces.size() );
                 runInBackground(
                         new Runnable() {
                           @Override
                           public void run() {
                             onFacesDetected(currTimestamp, faces);
+
+
                           }
                         });
               }
@@ -396,14 +409,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
   public void onFacesDetected(long currTimestamp, List<Face> faces ) {
 
-    String data = Helper.getStringImage(Helper.flip(faceBmp ,FLIP_HORIZONTAL));
-    //String data = Helper.getStringImage(faceBmp);
-    Helper.writeToFile(data,this);
-    String hash = Helper.Hash_SHA256(data);
 
-    requestInfran(data, hash, new customCallback() {
-      @Override
-      public void onSucess(String name) {
 
 
         cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
@@ -450,6 +456,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
         for (int i = 0; i<faces.size(); i++) {
 
+
+          checkTemp();
+
           LOGGER.i("FACE" + faces.get(i).toString());
           LOGGER.i("Running detection on face " + currTimestamp);
 
@@ -472,11 +481,30 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             //cv.drawRect(faceBB, paint);
             float sx = ((float) TF_OD_API_INPUT_SIZE) / faceBB.width();
             float sy = ((float) TF_OD_API_INPUT_SIZE) / faceBB.height();
+
+
             Matrix matrix = new Matrix();
             matrix.postTranslate(-faceBB.left, -faceBB.top);
             matrix.postScale(sx, sy);
 
             cvFace.drawBitmap(portraitBmp, matrix, null);
+
+            //Bitmap bmp2 = Bitmap.createBitmap(TF_OD_API_INPUT_SIZE, TF_OD_API_INPUT_SIZE, Config.ARGB_8888);
+
+            try {
+              //Bitmap bmp2 = Bitmap.createBitmap(portraitBmp,Math.round(faceBB.centerX()),Math.round(faceBB.centerY()), TF_OD_API_INPUT_SIZE,TF_OD_API_INPUT_SIZE, matrix, true);
+              Bitmap bmpWajah = Bitmap.createBitmap(portraitBmp,Math.round(faceBB.left),Math.round(faceBB.top), TF_OD_API_INPUT_SIZE,TF_OD_API_INPUT_SIZE, matrix, true);
+
+
+
+            String data = Helper.getStringImage(Helper.flip(bmpWajah ,FLIP_HORIZONTAL));
+            //String data = Helper.getStringImage(faceBmp);
+            Helper.writeToFile(data,this);
+            String hash = Helper.Hash_SHA256(data);
+
+            requestInfran(data, hash, new customCallback() {
+              @Override
+              public void onSucess(String name) {
 
             String label = "";
             float confidence = -1f;
@@ -495,9 +523,8 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
                 confidence = conf;
 
-                label =  name +"#"+result.getTitle()+" "+i;
+                label =   name +"#"+temperatureValue+"#"+result.getTitle();
                 Log.e(TAG, "label "+ name );
-
 
                 if (result.getId().equals("0")) {
                   color = Color.GREEN;
@@ -509,8 +536,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
               }
 
             }
-
-            if (getCameraFacing() == CameraCharacteristics.LENS_FACING_FRONT) {
 
               // camera is frontal so the image is flipped horizontally
               // flips horizontally
@@ -524,14 +549,27 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
               //flip.postScale(1, -1, targetW / 2.0f, targetH / 2.0f);
               flip.mapRect(boundingBox);
 
+
+
+              final Classifier.Recognition result = new Classifier.Recognition(
+                      "0", label, confidence, boundingBox);
+
+              result.setColor(color);
+              result.setLocation(boundingBox);
+              mappedRecognitions.add(result);
+
+              updateResults(currTimestamp, mappedRecognitions);
+
+
+              }
+
+
+            });
+
             }
-
-            final Classifier.Recognition result = new Classifier.Recognition(
-                    "0", label, confidence, boundingBox);
-
-            result.setColor(color);
-            result.setLocation(boundingBox);
-            mappedRecognitions.add(result);
+            catch(Exception e){
+              Log.e(TAG, "onFacesDetected: "+e.getMessage() );
+            }
 
 
           }
@@ -543,16 +581,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 //      lastSaved = System.currentTimeMillis();
 //    }
 
-        updateResults(currTimestamp, mappedRecognitions);
 
-
-      }
-
-      @Override
-      public void onFailure(String desc) {
-
-      }
-    });
 
   }
 
@@ -562,9 +591,8 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private void requestInfran(String data, String hash , customCallback customCallback){
 
     float threshold  = 0.43f ;
-
     EntityInfran.clear();
-    Helper.writeToFile(data,this);
+    //Helper.writeToFile(data,this);
     Call<ResponseDataInfran> call = API.requestInfran(new JsonInfran(data,hash,threshold));
     call.enqueue(new Callback<ResponseDataInfran>() {
       @Override
@@ -606,34 +634,73 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             }else{
               INFRAN_Message = status ;
               INFRAN_NAME = "Tidak Dikenali" ;
-              customCallback.onSucess("Tidak Dikenali");
+              customCallback.onSucess(status);
               //Toast.makeText(mContext, status, Toast.LENGTH_SHORT).show();
             }
 
           }else{
             INFRAN_NAME = "error server" ;
-            customCallback.onSucess("Tidak Dikenali");
-            Log.e(TAG, "error server  " );
+            customCallback.onSucess("error server");
+
           }
 
         }else{
           INFRAN_NAME = "error server" ;
-          customCallback.onSucess("Tidak Dikenali");
-          Log.e(TAG, "error server " );
+          customCallback.onSucess("error server");
+
         }
       }
 
       @Override
       public void onFailure(Call<ResponseDataInfran> call, Throwable t) {
         INFRAN_NAME = "error server" ;
-        customCallback.onSucess("Tidak Dikenali");
-        Log.e(TAG, "onResponse error: "+t.getMessage().toString() );
-        //Toast.makeText(mContext, t.getMessage(), Toast.LENGTH_SHORT).show();
+        customCallback.onSucess("error server");
+
 
       }
     });
 
   }
+
+  private void checkTemp() {
+    float distance=50;
+    final float distances = distance;
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+
+        TemperatureData temperatureData = temperatureUtil.getDataAndBitmap(distances,true, new HotImageCallback.Stub() {
+          @Override
+          public void onTemperatureFail(String e) {
+            Log.i("getDataAndBitmap", "onTemperatureFail " + e);
+            // showTip("Failed to get temperature:  " + e, temp);
+          }
+
+          @Override
+          public void getTemperatureBimapData(final TemperatureBitmapData data) {
+            Log.i("tagnya", "getTemperatureBimapData: Buat Ngeluarin gambar bitmapnya");
+          }
+
+        });
+        if (temperatureData != null) {
+          // String text = temperatureData.isUnusualTem()?"Abnormal body temperature!":"Normal body temperature";
+          String text = "";
+          if(temperatureData.isUnusualTem()){
+            text = "Temperature anormaly!";
+//                                playAbnormalSound();
+          }else {
+            text = "Temperature normal";
+//                                playNormalSound();
+          }
+          //showTip(text+"\nTemperature: " + temperatureData.getTemperature()+" ℃", temp);
+          temperatureValue ="Temp : "+ temperatureData.getTemperature()+" ℃";
+
+
+        }
+      }
+    }).start();
+  }
+
 
 
 

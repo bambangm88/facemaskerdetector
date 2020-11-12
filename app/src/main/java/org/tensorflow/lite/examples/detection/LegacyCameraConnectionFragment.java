@@ -20,6 +20,7 @@ import android.app.Fragment;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
+import android.hardware.camera2.CameraCharacteristics;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -38,6 +39,7 @@ import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
 
 import static android.content.ContentValues.TAG;
+import static org.tensorflow.lite.examples.detection.CameraActivity.useFacing;
 
 public class LegacyCameraConnectionFragment extends Fragment {
   private static final Logger LOGGER = new Logger();
@@ -89,9 +91,23 @@ public class LegacyCameraConnectionFragment extends Fragment {
             Size previewSize =
                 CameraConnectionFragment.chooseOptimalSize(
                     sizes, desiredSize.getWidth(), desiredSize.getHeight());
+
+
             parameters.setPreviewSize(previewSize.getWidth(), previewSize.getHeight());
-            camera.setDisplayOrientation(90); //semula90
+            if (useFacing == CameraCharacteristics.LENS_FACING_FRONT) {
+              camera.setDisplayOrientation(0); //semula90
+              Log.e(TAG, "onSurfaceTextureAvailable: front" );
+
+            }else{
+
+              Log.e(TAG, "onSurfaceTextureAvailable: back" );
+              camera.setDisplayOrientation(0); //semula90
+            }
+
+
+
             camera.setParameters(parameters);
+
             camera.setPreviewTexture(texture);
           } catch (IOException exception) {
             camera.release();

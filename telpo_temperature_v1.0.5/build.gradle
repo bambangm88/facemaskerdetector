@@ -1,0 +1,2 @@
+configurations.maybeCreate("default")
+artifacts.add("default", file('telpo_temperature_v1.0.5.jar'))

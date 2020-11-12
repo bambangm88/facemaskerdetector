@@ -1,1 +1,1 @@
-include ':app' ,':tensorflow-lite'
+include ':app', ':tensorflow-lite', ':telpo_temperature_v1.0.5', ':core-3.1.0'

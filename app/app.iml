@@ -113,6 +113,8 @@
     <orderEntry type="library" scope="TEST" name="Gradle: androidx.test.espresso:espresso-idling-resource:3.1.1@aar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: androidx.test:core:1.2.0@aar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: androidx.test:monitor:1.2.0@aar" level="project" />
+    <orderEntry type="library" name="Gradle: __local_aars__:C.\Users\Bambang\Documents\DUITKU PROJECT\DUITKU\SDK\NEW SDK 02012019\SDK BARU\facemaskdetector\android\app\libs\core-3.1.0.jar:unspecified@jar" level="project" />
+    <orderEntry type="library" name="Gradle: __local_aars__:C.\Users\Bambang\Documents\DUITKU PROJECT\DUITKU\SDK\NEW SDK 02012019\SDK BARU\facemaskdetector\android\app\libs\telpo_temperature_v1.0.5.jar:unspecified@jar" level="project" />
     <orderEntry type="library" name="Gradle: com.squareup.retrofit2:converter-gson:2.4.0@jar" level="project" />
     <orderEntry type="library" name="Gradle: com.squareup.retrofit2:retrofit:2.4.0@jar" level="project" />
     <orderEntry type="library" name="Gradle: com.google.code.gson:gson:2.8.5@jar" level="project" />

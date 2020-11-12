@@ -42,6 +42,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 
 
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -53,6 +54,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.common.thermalimage.HotImageCallback;
+import com.common.thermalimage.TemperatureBitmapData;
+import com.common.thermalimage.TemperatureData;
+import com.common.thermalimage.ThermalImageUtil;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -97,7 +102,7 @@ public abstract class CameraActivity extends AppCompatActivity
     private FloatingActionButton btnSwitchCam;
 
     private static final String KEY_USE_FACING = "use_facing";
-    private Integer useFacing = null;
+    public static Integer useFacing = null;
     private String cameraId = null;
 
     protected Integer getCameraFacing() {
@@ -645,4 +650,16 @@ public abstract class CameraActivity extends AppCompatActivity
     protected abstract void setNumThreads(int numThreads);
 
     protected abstract void setUseNNAPI(boolean isChecked);
+
+
+
+
+
+
+
+
+
+
+
+
 }
